@@ -3,6 +3,7 @@ import pytest
 from app.providers.openalex import OpenAlexProvider, reconstruct_abstract
 from app.providers.gdelt import GDELTProvider
 from app.scrapers.public import validate_public_url
+from app.providers.base import get_json
 
 
 def test_openalex_adapter():
@@ -47,6 +48,42 @@ def test_gdelt_adapter():
         record = GDELTProvider().collect("tech", "converter", 1)[0]
     assert record.content == "" and record.url == "https://news.example.org/a"
     assert "first-seen" in record.metadata_json["date_semantics"]
+
+
+def test_provider_retries_transient_status_and_honors_success(monkeypatch):
+    class Response:
+        def __init__(self, status, body=None):
+            self.status_code = status
+            self.headers = {"Retry-After": "0"}
+            self._body = body or {}
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                import httpx
+
+                raise httpx.HTTPStatusError("provider error", request=httpx.Request("GET", "https://api.openalex.org/works"), response=None)
+
+        def json(self):
+            return self._body
+
+    responses = iter([Response(503), Response(429), Response(200, {"results": []})])
+
+    class Client:
+        def __init__(self, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def get(self, *args, **kwargs):
+            return next(responses)
+
+    monkeypatch.setattr("app.providers.base.httpx.Client", Client)
+    monkeypatch.setattr("app.providers.base.time.sleep", lambda *_: None)
+    assert get_json("https://api.openalex.org/works") == {"results": []}
 
 
 @pytest.mark.parametrize(

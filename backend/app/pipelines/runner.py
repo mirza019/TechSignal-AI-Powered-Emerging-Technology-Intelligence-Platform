@@ -50,6 +50,8 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
         technologies = db.scalars(
             select(Technology).where(Technology.archived.is_(False), *([Technology.id == technology_id] if technology_id else []))
         ).all()
+        if run_provider != "web" and not technologies:
+            raise ValueError("No active technologies matched this pipeline run")
         raw_records = []
         try:
             if run_provider == "web":
@@ -130,8 +132,7 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
                 if fail_before_commit:
                     raise RuntimeError("Injected failure before commit")
                 for i, step in enumerate(steps[3:], 3):
-                    step.status = "Skipped" if step.name == "AI Enrichment" else "Successful"
-                    step.error = "AI analysis is an explicit analyst action or scheduled task." if step.name == "AI Enrichment" else ""
+                    step.status = "Successful"
                     step.started_at = now()
                     step.ended_at = now()
                     step.processed = len(validated)

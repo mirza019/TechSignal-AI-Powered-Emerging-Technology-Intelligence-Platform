@@ -1,12 +1,12 @@
 from datetime import timedelta
 from sqlalchemy import select, func
 import pytest
-from app.models import Technology, Evidence, Organization, User, PipelineRun, now
-from app.schemas import EvidenceInput, AnalysisOutput
+from app.models import Technology, Evidence, Organization, User, PipelineRun, PipelineStep, now
+from app.schemas import EvidenceInput, AnalysisOutput, AnswerOutput, BriefingOutput, ReportInput
 from app.repositories.evidence import upsert_evidence
 from app.utils.records import normalize_url, normalize_doi
 from app.analytics.scoring import calculate, suggest_horizon
-from app.ai.service import analyze, validate_citations
+from app.ai.service import analyze, answer, validate_citations, validate_grounded_numbers
 from app.ai.retrieval import retrieve
 from app.pipelines.runner import create_run, execute_run
 from app.services.seed import seed
@@ -82,6 +82,9 @@ def test_pipeline_atomic_rollback_and_idempotence(factory):
     with factory() as db:
         assert db.get(PipelineRun, run_id).status == "Successful"
         assert db.scalar(select(func.count()).select_from(Evidence)) == baseline + 4
+        steps = db.scalars(select(PipelineStep).where(PipelineStep.run_id == run_id)).all()
+        assert steps and all(step.status == "Successful" for step in steps)
+        assert {step.name for step in steps} >= {"Validation", "Embedding", "Grounding Preparation", "Database Commit"}
         run = create_run(db, "demo", tech_id, 4)
         run_id = run.id
     execute_run(run_id, factory)
@@ -119,6 +122,62 @@ def test_ai_citations_and_no_automatic_horizon_overwrite(db):
         validate_citations(output, retrieve(db, technology.name, technology.id, True))
     with pytest.raises(ValueError):
         AnalysisOutput.model_validate_json('{"not": "an assessment"}')
+
+
+def test_ai_rejects_unsupported_numbers_and_falls_back(db):
+    class NumericProvider:
+        def generate(self, schema, prompt):
+            evidence_id = prompt["evidence"][0]["id"]
+            return (
+                AnswerOutput(
+                    facts=[f"Adoption increased by 98765 percent [{evidence_id}]"],
+                    interpretation="A fabricated 54321 deployments were reported.",
+                    uncertainties=[],
+                    evidence_ids=[evidence_id],
+                ),
+                {},
+            )
+
+    user = db.scalar(select(User).where(User.role == "Analyst"))
+    technology = db.scalar(select(Technology))
+    output, _, record = answer(db, technology.name, user, technology.id, True, provider=NumericProvider())
+    assert "98765" not in str(output.model_dump()) and "54321" not in str(output.model_dump())
+    assert record.model == "deterministic-evidence-summary"
+    assert record.token_usage["fallback_reason"] == "ValueError"
+
+
+def test_numeric_grounding_accepts_only_supplied_values():
+    output = AnswerOutput(facts=["The evidence contains 12 studies."], interpretation="", uncertainties=[], evidence_ids=[])
+    assert validate_grounded_numbers(output, {"verified_count": 12}) is output
+    output.facts = ["The evidence contains 13 studies."]
+    with pytest.raises(ValueError, match="numeric"):
+        validate_grounded_numbers(output, {"verified_count": 12})
+
+
+def test_report_generation_falls_back_when_model_output_is_ungrounded(db):
+    from app.services.reports import generate_report
+
+    class InvalidReportProvider:
+        def generate(self, schema, prompt):
+            evidence_id = prompt["evidence"][0]["id"]
+            fields = {
+                name: ([f"Unsupported 99999 claim [{evidence_id}]"] if field.annotation == list[str] else "Unsupported 99999 claim")
+                for name, field in BriefingOutput.model_fields.items()
+                if name not in ("confidence_score", "evidence_ids")
+            }
+            return schema(**fields, confidence_score=0.99, evidence_ids=[evidence_id]), {}
+
+    user = db.scalar(select(User).where(User.role == "Analyst"))
+    technology = db.scalar(select(Technology))
+    report = generate_report(
+        db,
+        ReportInput(kind="Technology Opportunity Report", technology_id=technology.id),
+        user,
+        True,
+        provider=InvalidReportProvider(),
+    )
+    assert "99999" not in report.markdown
+    assert "deterministic-evidence-summary" in report.markdown
 
 
 def test_retrieval_is_bounded_and_mode_isolated(db):

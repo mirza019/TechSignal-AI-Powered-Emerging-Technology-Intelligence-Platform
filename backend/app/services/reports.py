@@ -1,39 +1,60 @@
 from io import BytesIO
 from datetime import timedelta
 from xml.sax.saxutils import escape
+import httpx
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from sqlalchemy import select
 from app.config import get_settings
-from app.models import Report, Briefing, Technology, Organization, RadarHistory, AIAnalysis, now
-from app.ai.service import GeminiProvider, validate_citations, context, PROMPT_VERSION
+from app.models import Report, Briefing, Technology, Organization, RadarHistory, AIAnalysis, Score, now
+from app.ai.service import (
+    GeminiProvider,
+    validate_citations,
+    validate_grounded_numbers,
+    deterministic_confidence,
+    context,
+    PROMPT_VERSION,
+)
 from app.ai.retrieval import retrieve
 from app.schemas import BriefingOutput
 
 DISCLAIMER = "Portfolio horizon methodology — not Siemens Energy internal methodology."
 
 
-def generate_report(db, request, actor, is_demo):
+def generate_report(db, request, actor, is_demo, provider=None):
     technology = db.get(Technology, request.technology_id) if request.technology_id else None
     organization = db.get(Organization, request.organization_id) if request.organization_id else None
     subject = organization.name if organization else technology.name if technology else "Technology portfolio"
     query = f"{request.kind} for {subject}. Technology focus, opportunities, risks and analyst questions."
     evidence = retrieve(db, query, technology.id if technology else None, is_demo, organization.id if organization else None)
-    model, usage = "deterministic-evidence-summary", {}
-    if get_settings().gemini_api_key and evidence:
-        output, usage = GeminiProvider().generate(
-            BriefingOutput,
-            {
-                "task": query,
-                "subject": subject,
-                "evidence": context(evidence),
-                "instructions": "All factual claims must refer to evidence IDs. If a section lacks evidence, explicitly say so. Questions and opportunities must be presented as proposals, not facts. This is a bounded bundle, not an exhaustive report.",
-            },
-        )
-        model = get_settings().gemini_model
-    else:
+    model, usage, output = "deterministic-evidence-summary", {}, None
+    score = (
+        db.scalar(select(Score).where(Score.technology_id == technology.id, Score.is_demo == is_demo).order_by(Score.created_at.desc()))
+        if technology
+        else None
+    )
+    prompt = {
+        "task": query,
+        "subject": subject,
+        "evidence": context(evidence),
+        "verified_metrics": score.metrics if score else {},
+        "instructions": "All factual claims must refer to evidence IDs. If a section lacks evidence, explicitly say so. Questions and opportunities must be presented as proposals, not facts. This is a bounded bundle, not an exhaustive report.",
+    }
+    if (provider or get_settings().gemini_api_key) and evidence:
+        try:
+            output, usage = (provider or GeminiProvider()).generate(BriefingOutput, prompt)
+            validate_citations(output, evidence)
+            validate_grounded_numbers(output, prompt)
+            output.confidence_score = deterministic_confidence(evidence)
+            model = get_settings().gemini_model
+        except (httpx.HTTPError, ValueError, KeyError, RuntimeError) as exc:
+            # An unavailable model, malformed JSON, unsupported citation or
+            # invented number must not break briefing preparation.
+            usage = {"fallback_reason": type(exc).__name__}
+            output = None
+    if output is None:
         output = BriefingOutput(
             executive_summary=f"{len(evidence)} selected {'synthetic' if is_demo else 'public'} evidence records for analyst review. "
             + ("No LLM synthesis was performed." if evidence else "Insufficient evidence for a grounded briefing."),
@@ -59,7 +80,7 @@ def generate_report(db, request, actor, is_demo):
                 "Which pilot results, customers or partnerships can be verified?",
             ],
             monitoring_recommendation="Review original sources and reassess when independent evidence changes.",
-            confidence_score=0.3 if evidence else 0,
+            confidence_score=deterministic_confidence(evidence),
             evidence_ids=[e.id for e in evidence],
         )
     validate_citations(output, evidence)

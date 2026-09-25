@@ -170,7 +170,7 @@ STEPS = [
     "Entity Linking",
     "Embedding",
     "Signal Calculation",
-    "AI Enrichment",
+    "Grounding Preparation",
     "Database Commit",
 ]
 

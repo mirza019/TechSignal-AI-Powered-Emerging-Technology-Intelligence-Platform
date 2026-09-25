@@ -35,7 +35,7 @@ H1–H4 is a configurable portfolio methodology, not Siemens Energy methodology.
 ## Verification log — 2026-09-25
 
 - Implemented all ten phases with documented deployment boundaries.
-- 31 backend tests passed, including SSO RSA token validation, audience/nonce
+- 35 backend tests passed, including SSO RSA token validation, audience/nonce
   rejection, role mapping, one-time exchange/replay and expired-code handling.
 - Ruff clean; SQLite migrations upgrade to head with no schema drift.
 - PostgreSQL 16.15 + pgvector 0.8.6: fresh migrations (including SSO), seed,
@@ -49,6 +49,8 @@ H1–H4 is a configurable portfolio methodology, not Siemens Energy methodology.
 - PDF export rendered and visually reviewed; synthetic assessments and live
   evidence are explicitly distinguished in report provenance.
 - API keys moved into ignored local .env; .env.example contains placeholders only.
+- Generated numeric claims must occur in evidence or verified metrics; violations,
+  malformed output and provider failures now use a deterministic fallback.
 - Microsoft SSO requires an Entra tenant registration before a real login can be
   exercised. Automated flow and cryptographic validation tests pass.
 - Docker is absent locally; Compose builds/startup are configured in CI but have

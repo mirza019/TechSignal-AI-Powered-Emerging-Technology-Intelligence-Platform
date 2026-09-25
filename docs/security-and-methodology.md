@@ -34,6 +34,13 @@ one. No raw HTML is rendered from generated text. Use an identity provider and
 secure cookies for a hardened public deployment. Local demo credentials are
 published intentionally and prohibited by production startup settings.
 
+Generated AI prose passes two grounding gates before persistence. Citation IDs
+must belong to the exact retrieved bundle, and every numeric literal in generated
+prose must already occur in the supplied evidence or verified computed metrics.
+The application overwrites model confidence and horizon suggestions with
+deterministic rules. Invalid JSON, timeouts, unsupported citations and unsupported
+numbers produce a deterministic evidence summary so analyst work can continue.
+
 ## Scraping
 Disabled by default. Exact hostname allowlist; HTTP(S) only on standard ports;
 public IP resolution and IP-pinned requests prevent DNS rebinding; TLS verifies

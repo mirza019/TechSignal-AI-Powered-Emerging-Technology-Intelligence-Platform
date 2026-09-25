@@ -72,6 +72,16 @@ alone cannot maintain the structured relationships or decision history needed
 for that work. Grid Radar demonstrates research intelligence, data engineering,
 AI grounding, explainable assessment and analyst decision support in one system.
 
+### Fit for technology scouting work
+
+The application represents the outcomes of a grid-technology scouting role:
+monitoring selected domains, maintaining structured H1–H4 records, tracking
+startups and research institutions, preparing background notes and briefings, and
+using AI to improve search and synthesis. It demonstrates those capabilities
+through working software rather than mirroring a job description or claiming an
+employer's internal process. See the [role-alignment matrix](docs/role-alignment.md)
+for the evidence behind each capability and the boundaries of the portfolio claim.
+
 ## Features
 
 - Executive dashboard, active signal feed and review queue.
@@ -100,19 +110,25 @@ AI grounding, explainable assessment and analyst decision support in one system.
   audit history, configurable CORS and expensive-endpoint rate limits.
 - Optional APScheduler jobs, Docker images, GitHub Actions and Azure preparation.
 
-## Screenshots
-
-The UI uses a responsive sidebar workspace with a muted green enterprise palette.
-Suggested screenshots for your portfolio presentation:
-
-- `docs/screenshots/executive-overview.png` — KPIs, radar, portfolio horizons.
-- `docs/screenshots/technology-profile.png` — evidence-grounded analyst assessment.
-- `docs/screenshots/pipeline.png` — staging, validation and committed run history.
-
-These are screenshot placeholders, not links to fabricated screenshots. Capture
-from your own running instance after choosing the desired synthetic demo view.
-
 ## Architecture
+
+![Grid Radar system architecture](docs/images/system-architecture.svg)
+
+The diagram separates public/synthetic inputs, the transactional trust pipeline,
+the intelligence core and the analyst decision boundary. Generated text cannot
+move a radar placement; only an authenticated analyst review can do that.
+
+## Workflow
+
+![Evidence-to-decision workflow](docs/images/intelligence-workflow.svg)
+
+Successful runs complete every displayed stage. If collection or validation fails,
+the production merge does not occur. If a failure happens during the merge, the
+transaction rolls back while the run and step diagnostics remain available for a
+linked retry. Gemini failures and unsupported citations or numbers fall back to a
+deterministic evidence summary rather than breaking the analyst workflow.
+
+### Machine-readable architecture
 
 ```mermaid
 flowchart LR
@@ -128,7 +144,7 @@ flowchart LR
     DB --> AN[Transparent scoring + signal rules]
     DB --> V[pgvector / FAISS retrieval]
     V --> AI[Gemini structured output / deterministic fallback]
-    AI --> CV[Citation validation + provenance]
+    AI --> CV[Citation + numeric validation + provenance]
     CV --> AR[Analyst review]
     AR --> R[Technology radar + profiles]
     R --> B[Evidence-backed briefings]
@@ -147,7 +163,8 @@ backend/
   alembic/versions/
 frontend/src/{components,pages}/
 data/startups.csv
-docs/{implementation-plan,security-and-methodology,azure-deployment}.md
+docs/{implementation-plan,security-and-methodology,role-alignment,azure-deployment}.md
+docs/images/{system-architecture,intelligence-workflow}.svg
 scripts/{dev.sh,postgres_smoke.py}
 .github/workflows/ci.yml
 ```
@@ -199,7 +216,10 @@ pages are appropriate. Redirects fail closed. See the [scraper and trust model](
 `LLMProvider` is the replacement boundary. Gemini uses the REST generateContent
 API with a Pydantic-generated JSON schema. Relevant records are retrieved into a
 bounded context (8 results from at most 2,000 recent candidates). Returned IDs are
-validated against exactly those records. Analyses record model, prompt version,
+validated against exactly those records. Numeric claims are rejected unless the
+same number occurs in supplied evidence or verified metrics. Model-generated
+confidence and horizon values are replaced with deterministic application rules.
+Analyses record model, prompt version,
 timestamp, output, token usage, confidence, actor and approval status. External
 text is designated untrusted data in the system instruction.
 
@@ -219,7 +239,9 @@ Its first use downloads model weights and requires network access. Encoder chang
 trigger regeneration; use a 384-dimensional model. pgvector is installed under a
 migration savepoint when supported; otherwise FAISS is used, with NumPy as a final
 non-index fallback. The index is scoped to filtered evidence, never the entire
-LLM context. Citation membership is checked; claim entailment still needs review.
+LLM context. Citation membership and numeric support are checked; claim entailment
+still needs review. Provider timeouts, malformed JSON, unsupported citations and
+unsupported numbers produce a labelled deterministic fallback.
 
 ## Radar methodology / scoring
 
@@ -312,6 +334,8 @@ primary-source links, search input and modal interactions.
 GitHub Actions additionally starts PostgreSQL/pgvector, runs migration and rollback
 smoke checks, builds Docker images and starts the complete Compose application.
 The local verification record is in [the implementation plan](docs/implementation-plan.md).
+The detailed success, failure and grounding cases are in the
+[verification matrix](docs/verification-matrix.md).
 Local PostgreSQL 16 + pgvector migration, rollback, merge and retrieval checks passed.
 Live Gemini generation and OpenAlex collection were also exercised. Docker is not
 installed on the development host; Compose execution remains a CI/deployment check.
