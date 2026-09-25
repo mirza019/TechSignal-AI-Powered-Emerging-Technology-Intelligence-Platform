@@ -6,6 +6,12 @@ An evidence-first personal project for scouting emerging technologies.
 It connects research, organizations and market signals to transparent scores,
 analyst-reviewed horizons, an interactive radar and decision-ready briefings.
 
+**Live app:** [techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io](https://techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io)
+
+Use **Explore read-only demo** to enter the hosted portfolio. The deployment runs
+the React frontend and FastAPI backend together in Azure Container Apps and keeps
+Admin/Analyst credentials private.
+
 ## Quick start
 
 ### Docker / PostgreSQL
@@ -335,7 +341,9 @@ clear retry message when a public service is temporarily rate-limited.
 weekly AI reassessment and Monday reports. In demo mode collection stays synthetic.
 Manual admin runs execute as background tasks. Interrupted runs are marked failed
 on restart. Use one worker/replica; move to Celery/Redis and a dedicated scheduler
-before scaling. See [Azure Container Apps preparation](docs/azure-deployment.md).
+before scaling. The public portfolio is deployed as one multi-container Azure
+Container App using the checked-in [deployment manifest](.azure/techsignal.containerapp.yaml).
+See the [Azure deployment guide](docs/azure-deployment.md).
 
 ## Roadmap
 

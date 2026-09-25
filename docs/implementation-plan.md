@@ -35,7 +35,7 @@ H1–H4 is a configurable technology horizon model.
 ## Verification log — 2026-09-25
 
 - Implemented all ten phases with documented deployment boundaries.
-- 35 backend tests passed, including SSO RSA token validation, audience/nonce
+- 38 backend tests passed, including SSO RSA token validation, audience/nonce
   rejection, role mapping, one-time exchange/replay and expired-code handling.
 - Ruff clean; SQLite migrations upgrade to head with no schema drift.
 - PostgreSQL 16.15 + pgvector 0.8.6: fresh migrations (including SSO), seed,
