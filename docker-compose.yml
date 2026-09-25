@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: radar
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-radar}
+    volumes:
+      - radar-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar -d radar"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://radar:radar@postgres:5432/radar}
+      APP_SECRET: ${APP_SECRET:-local-demo-only-change-this-before-deploying}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      SEED_DEMO: ${SEED_DEMO:-true}
+      ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}
+      ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
+      ENTRA_CLIENT_SECRET: ${ENTRA_CLIENT_SECRET:-}
+      ENTRA_REDIRECT_URI: ${ENTRA_REDIRECT_URI:-http://localhost:8080/api/auth/sso/callback}
+      ENTRA_ALLOWED_DOMAINS: ${ENTRA_ALLOWED_DOMAINS:-[]}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      OPENALEX_API_KEY: ${OPENALEX_API_KEY:-}
+      SEMANTIC_SCHOLAR_API_KEY: ${SEMANTIC_SCHOLAR_API_KEY:-}
+      ENABLE_GDELT: ${ENABLE_GDELT:-true}
+      ENABLE_SEMANTIC_SCHOLAR: ${ENABLE_SEMANTIC_SCHOLAR:-false}
+      ENABLE_WEB_SCRAPING: ${ENABLE_WEB_SCRAPING:-false}
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-false}
+      CORS_ORIGINS: '["http://localhost:8080","http://localhost:5173"]'
+      SCRAPER_ALLOWED_DOMAINS: ${SCRAPER_ALLOWED_DOMAINS:-[]}
+      SCRAPER_USER_AGENT: ${SCRAPER_USER_AGENT:-GridRadarPortfolio/1.0}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - backend
+volumes:
+  radar-data:
