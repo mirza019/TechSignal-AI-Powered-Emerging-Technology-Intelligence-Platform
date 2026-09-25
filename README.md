@@ -8,7 +8,7 @@ analyst-reviewed horizons, an interactive radar and decision-ready briefings.
 
 **Live app:** [techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io](https://techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io)
 
-Use **Explore read-only demo** to enter the hosted portfolio. The deployment runs
+Use **Sign in to TechSignal** to enter the hosted portfolio. The deployment runs
 the React frontend and FastAPI backend together in Azure Container Apps and keeps
 Admin/Analyst credentials private.
 

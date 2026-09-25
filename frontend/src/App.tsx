@@ -184,100 +184,81 @@ function Login({
           <BadgeLabel />
           <h2>Welcome to TechSignal</h2>
           <p>Your workspace for evidence-backed technology decisions.</p>
-          <button
-            type="button"
-            className="button sso-button wide"
-            disabled={!providers?.microsoft}
-            onClick={() => {
-              window.location.assign("/api/auth/sso/login");
-            }}
-          >
-            <span className="microsoft-mark" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>{" "}
-            Continue with Microsoft
-          </button>
-          {!providers?.microsoft && (
-            <p className="sso-note">
-              {providers
-                ? "Microsoft SSO is ready to configure. Your administrator must connect an Entra tenant."
-                : "Loading sign-in options…"}
-            </p>
-          )}
-          <div className="login-divider">
-            <span>or sign in with your workspace account</span>
-          </div>
-          <label>
-            Email address
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="username"
-            />
-          </label>
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-          </label>
           <State error={error || authError} />
-          <button className="button primary wide" disabled={busy}>
-            {busy ? "Signing in…" : "Enter workspace"}
-            <ArrowRight size={17} />
-          </button>
-          {providers?.public_demo && (
+          {!providers ? (
+            !error && <p className="sso-note">Loading sign-in…</p>
+          ) : providers.public_demo ? (
             <div className="demo-credentials">
-              <strong>Explore TechSignal</strong>
-              <p>Open the hosted portfolio in a read-only Viewer workspace.</p>
+              <strong>Technology intelligence workspace</strong>
+              <p>Continue directly to the TechSignal portfolio.</p>
               <button
                 type="button"
-                className="button primary wide"
+                className="button sso-button wide"
                 disabled={busy}
                 onClick={enterPublicDemo}
               >
-                Explore read-only demo
+                {busy ? "Signing in…" : "Sign in to TechSignal"}
                 <ArrowRight size={17} />
               </button>
             </div>
-          )}
-          {providers?.demo_available && !providers.public_demo && (
-            <div className="demo-credentials">
-              <strong>Explore the portfolio demo</strong>
-              <p>
-                Choose a role. All demo accounts use <code>RadarDemo2026!</code>
-              </p>
-              <div className="role-choices">
-                {["Viewer", "Analyst", "Admin"].map((role) => (
-                  <button
-                    type="button"
-                    key={role}
-                    className={
-                      email.startsWith(role.toLowerCase()) ? "selected" : ""
-                    }
-                    onClick={() => {
-                      setEmail(`${role.toLowerCase()}@techsignal.local`);
-                      setPassword("RadarDemo2026!");
-                    }}
-                  >
-                    {role}
-                  </button>
-                ))}
+          ) : (
+            <>
+              <button
+                type="button"
+                className="button sso-button wide"
+                disabled={!providers.microsoft}
+                onClick={() => {
+                  window.location.assign("/api/auth/sso/login");
+                }}
+              >
+                <span className="microsoft-mark" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>{" "}
+                Continue with Microsoft
+              </button>
+              {!providers.microsoft && (
+                <p className="sso-note">
+                  Microsoft SSO is ready to configure. Your administrator must
+                  connect an Entra tenant.
+                </p>
+              )}
+              <div className="login-divider">
+                <span>or sign in with your workspace account</span>
               </div>
-              <small>
-                Sample records are synthetic and are not current market
-                intelligence.
-              </small>
-            </div>
+              <label>
+                Email address
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="username"
+                />
+              </label>
+              <label>
+                Password
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+              </label>
+              <button className="button primary wide" disabled={busy}>
+                {busy ? "Signing in…" : "Enter workspace"}
+                <ArrowRight size={17} />
+              </button>
+              {providers.demo_available && (
+                <div className="demo-credentials">
+                  <strong>Local development accounts</strong>
+                  <p>Use the seeded account credentials from the README.</p>
+                </div>
+              )}
+            </>
           )}
         </form>
       </div>
