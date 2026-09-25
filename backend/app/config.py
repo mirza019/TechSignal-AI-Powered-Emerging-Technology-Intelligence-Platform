@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     demo_mode: bool = True
     seed_demo: bool = True
     public_demo: bool = False
+    bootstrap_live_catalog: bool = False
     demo_admin_password: str = "RadarDemo2026!"
     demo_analyst_password: str = "RadarDemo2026!"
     demo_viewer_password: str = "RadarDemo2026!"

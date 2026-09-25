@@ -415,7 +415,7 @@ def settings(db: Session = Depends(get_db), user=Depends(current_user)):
         "signal_rules": db.get(SystemSetting, "signal_rules").value if db.get(SystemSetting, "signal_rules") else {},
         "providers": {
             "gemini": bool(cfg.gemini_api_key),
-            "openalex": bool(cfg.openalex_api_key),
+            "openalex": True,
             "gdelt": cfg.enable_gdelt,
             "semantic_scholar": cfg.enable_semantic_scholar,
             "epo": False,

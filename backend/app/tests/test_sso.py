@@ -25,11 +25,12 @@ def test_unconfigured_sso(client, monkeypatch):
 
 def test_pkce_state_and_cookie(client, monkeypatch):
     cfg = configure(monkeypatch)
-    response = client.get("/api/auth/sso/login", follow_redirects=False)
+    response = client.get("/api/auth/sso/login?role=Admin", follow_redirects=False)
     query = parse_qs(urlparse(response.headers["location"]).query)
     cookie = jwt.decode(client.cookies.get(sso.COOKIE), cfg.app_secret, algorithms=["HS256"], issuer="techsignal-sso")
     assert query["state"] == [cookie["state"]]
     assert query["nonce"] == [cookie["nonce"]]
+    assert cookie["requested_role"] == "Admin"
     assert query["code_challenge_method"] == ["S256"]
     assert "HttpOnly" in response.headers["set-cookie"]
     assert "test-secret" not in response.headers["location"]
@@ -39,7 +40,7 @@ def test_pkce_state_and_cookie(client, monkeypatch):
 
 def test_callback_role_mapping_and_single_use(client, monkeypatch):
     cfg = configure(monkeypatch)
-    start = client.get("/api/auth/sso/login", follow_redirects=False)
+    start = client.get("/api/auth/sso/login?role=Analyst", follow_redirects=False)
     state = parse_qs(urlparse(start.headers["location"]).query)["state"][0]
     mock = MagicMock()
     mock.__enter__.return_value.post.return_value.json.return_value = {"id_token": "mock-token"}
@@ -62,6 +63,11 @@ def test_callback_role_mapping_and_single_use(client, monkeypatch):
     assert result.json()["user"]["role"] == "Analyst"
     assert result.headers["cache-control"] == "no-store"
     assert client.post("/api/auth/sso/exchange", json={"code": code}).status_code == 401
+
+
+def test_selected_sso_role_is_validated(client, monkeypatch):
+    configure(monkeypatch)
+    assert client.get("/api/auth/sso/login?role=Owner", follow_redirects=False).status_code == 422
 
 
 def test_expired_exchange(client, db):

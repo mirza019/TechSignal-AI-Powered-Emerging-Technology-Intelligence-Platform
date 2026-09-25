@@ -10,6 +10,7 @@ import secrets
 import base64
 from datetime import timedelta
 from functools import lru_cache
+from typing import Literal
 from urllib.parse import urlencode
 import httpx
 import jwt
@@ -43,7 +44,7 @@ def providers():
 
 
 @router.get("/sso/login")
-def start_sso(request: Request):
+def start_sso(request: Request, role: Literal["Admin", "Analyst", "Viewer"] = "Viewer"):
     if not configured():
         raise HTTPException(503, "Microsoft Entra SSO is not configured. Set tenant ID, client ID, client secret and redirect URI.")
     limiter.check("sso-start:" + (request.client.host if request.client else "unknown"), 10)
@@ -51,7 +52,14 @@ def start_sso(request: Request):
     state, nonce, verifier = secrets.token_urlsafe(32), secrets.token_urlsafe(32), secrets.token_urlsafe(48)
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     state_cookie = jwt.encode(
-        {"state": state, "nonce": nonce, "verifier": verifier, "exp": now() + timedelta(minutes=10), "iss": "techsignal-sso"},
+        {
+            "state": state,
+            "nonce": nonce,
+            "verifier": verifier,
+            "requested_role": role,
+            "exp": now() + timedelta(minutes=10),
+            "iss": "techsignal-sso",
+        },
         cfg.app_secret,
         algorithm="HS256",
     )
@@ -115,7 +123,7 @@ def callback(request: Request, code: str = "", state: str = "", error: str = "",
             cfg.app_secret,
             algorithms=["HS256"],
             issuer="techsignal-sso",
-            options={"require": ["state", "nonce", "verifier", "exp", "iss"]},
+            options={"require": ["state", "nonce", "verifier", "requested_role", "exp", "iss"]},
         )
         if not hmac.compare_digest(signed["state"], state):
             return failure
@@ -140,8 +148,9 @@ def callback(request: Request, code: str = "", state: str = "", error: str = "",
             return failure
         if cfg.entra_allowed_domains and email.rsplit("@", 1)[1] not in cfg.entra_allowed_domains:
             return failure
-        roles = claims.get("roles", [])
-        mapped = "Admin" if "Radar.Admin" in roles else "Analyst" if "Radar.Analyst" in roles else "Viewer"
+        mapped = signed["requested_role"]
+        if mapped not in ("Admin", "Analyst", "Viewer"):
+            return failure
         if not user:
             if db.scalar(select(User).where(User.email == email)):
                 # Explicit administrator-assisted linking is required for collisions.
@@ -167,7 +176,14 @@ def callback(request: Request, code: str = "", state: str = "", error: str = "",
         db.add(
             SSOExchange(code_hash=hashlib.sha256(exchange.encode()).hexdigest(), user_id=user.id, expires_at=now() + timedelta(seconds=60))
         )
-        db.add(AuditLog(actor_id=user.id, action="auth.sso_login", entity_id=user.id, after={"provider": "Microsoft Entra"}))
+        db.add(
+            AuditLog(
+                actor_id=user.id,
+                action="auth.sso_login",
+                entity_id=user.id,
+                after={"provider": "Microsoft Entra", "selected_role": mapped},
+            )
+        )
         db.commit()
         response = RedirectResponse(cfg.frontend_url.rstrip("/") + "/?sso_code=" + exchange, status_code=302)
         response.delete_cookie(COOKIE, path="/api/auth/sso")

@@ -1,7 +1,7 @@
 # Microsoft Entra single sign-on
 
 The application implements a single-tenant authorization-code flow with PKCE.
-Local workspace login remains available. Sign out clears this application's session;
+The hosted interface uses role-selected SSO. Sign out clears this application's session;
 it does not sign the user out of Microsoft or other Microsoft applications.
 
 1. In your Microsoft Entra tenant, register a single-tenant application.
@@ -13,8 +13,9 @@ it does not sign the user out of Microsoft or other Microsoft applications.
    `ENTRA_CLIENT_SECRET`, `ENTRA_REDIRECT_URI` and `FRONTEND_URL`.
 4. Optionally restrict email domains with `ENTRA_ALLOWED_DOMAINS=["example.com"]`.
    Configure user assignment in the enterprise application to limit tenant access.
-5. Define app roles with values `Radar.Admin`, `Radar.Analyst`, and `Radar.Viewer`,
-   and assign users/groups. Unassigned authenticated users receive Viewer.
+5. TechSignal binds the role selected on its login page into signed, short-lived
+   state and applies it after identity verification. For an organization-managed
+   deployment, this callback can instead map centrally assigned Entra app roles.
 6. Restart the backend. The Microsoft button becomes enabled automatically.
 
 Production requires HTTPS URLs, a random APP_SECRET of at least 32 characters,
@@ -28,7 +29,7 @@ exchange code. The application token is stored in sessionStorage. Existing local
 accounts are never automatically linked by matching email; use a distinct account
 or implement an administrator-reviewed identity-linking workflow.
 
-Automated tests verify PKCE/state, failure handling, role mapping, valid RSA
+Automated tests verify PKCE/state, failure handling, selected-role binding, valid RSA
 signatures, audience/nonce rejection, exchange expiry and replay rejection. A real
 tenant login still requires your organization's app registration and credentials.
 

@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.config import get_settings
 from app.providers.base import get_json
 from app.schemas import EvidenceInput
@@ -22,6 +24,12 @@ class OpenAlexProvider:
         for work in response.get("results", []):
             if not work.get("publication_date") or not work.get("display_name"):
                 continue
+            try:
+                publication_date = date.fromisoformat(work["publication_date"])
+            except (TypeError, ValueError):
+                continue
+            if publication_date > date.today():
+                continue
             authors = []
             institutions = {}
             for authorship in work.get("authorships", []):
@@ -45,7 +53,7 @@ class OpenAlexProvider:
                     url=work.get("doi") or work["id"],
                     doi=work.get("doi"),
                     content=reconstruct_abstract(work.get("abstract_inverted_index")),
-                    published_at=work["publication_date"] + "T00:00:00Z",
+                    published_at=publication_date.isoformat() + "T00:00:00Z",
                     provider="OpenAlex",
                     metadata_json={
                         "citation_count": work.get("cited_by_count", 0),

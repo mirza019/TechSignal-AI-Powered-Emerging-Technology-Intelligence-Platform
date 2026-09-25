@@ -15,14 +15,14 @@ Azure link serves the same frontend and API from one Container App.
 
 ## Login
 
-No email or password is required for the portfolio workspace:
+No application password is required for the hosted workspace:
 
 1. Open either live link.
-2. Select Viewer, Analyst or Admin from **Workspace role**.
-3. Choose **Continue as …**.
+2. Select Viewer, Data Analyst or Admin from **Workspace role**.
+3. Choose **Continue with Microsoft as …** and complete Microsoft sign-in.
 
-**Continue with Microsoft** opens the Microsoft Entra sign-in flow. Tenant users
-are assigned a role from Entra application roles, with Viewer as the default.
+The selected role is included in signed, short-lived SSO state and applied only
+after Microsoft Entra verifies the user's identity.
 
 ## Quick start
 
@@ -80,7 +80,7 @@ AI grounding, explainable assessment and analyst decision support in one system.
 ## Features
 
 - Executive dashboard, active signal feed and review queue.
-- Fifteen seeded technologies across eleven configurable domains; create, edit,
+- Fifteen tracked technology topics across eleven configurable domains; create, edit,
   archive and query-keyword management.
 - Plotly radar with H1–H4 rings, hover/click details, domain/search/maturity/
   confidence/signal filters and placement history.

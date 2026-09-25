@@ -9,6 +9,7 @@ import httpx
 from app.config import get_settings
 from app.db import SessionLocal, engine
 from app.services.seed import seed
+from app.services.catalog import bootstrap_live_catalog
 from app.api.routes import router
 from app.services.sso import router as sso_router
 from app.models import PipelineRun, PipelineStep, now
@@ -22,6 +23,8 @@ async def lifespan(app):
     with SessionLocal() as db:
         if cfg.seed_demo:
             seed(db)
+        elif cfg.bootstrap_live_catalog:
+            bootstrap_live_catalog(db)
         # Single worker deployment: recover runs interrupted by process restart.
         for run in db.scalars(select(PipelineRun).where(PipelineRun.status.in_(["Pending", "Running"]))):
             run.status = "Failed"

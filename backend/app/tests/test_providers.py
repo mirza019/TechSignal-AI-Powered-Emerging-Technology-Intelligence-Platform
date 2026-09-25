@@ -32,6 +32,22 @@ def test_openalex_adapter():
     assert reconstruct_abstract(None) == ""
 
 
+def test_openalex_skips_future_dated_records():
+    fixture = {
+        "results": [
+            {
+                "id": "https://openalex.org/WFUTURE",
+                "display_name": "Future publication",
+                "publication_date": "2999-01-01",
+                "authorships": [],
+                "primary_location": {},
+            }
+        ]
+    }
+    with patch("app.providers.openalex.get_json", return_value=fixture):
+        assert OpenAlexProvider().collect("tech", "converter", 1) == []
+
+
 def test_gdelt_adapter():
     fixture = {
         "articles": [

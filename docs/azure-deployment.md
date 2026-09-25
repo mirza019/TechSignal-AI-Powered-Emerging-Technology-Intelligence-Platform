@@ -8,7 +8,7 @@ Live API/app URL: [TechSignal on Azure](https://techsignal.icywater-653510cb.pol
 
 Public frontend: [TechSignal on GitHub Pages](https://mirza019.github.io/TechSignal-AI-Powered-Emerging-Technology-Intelligence-Platform/)
 
-The hosted portfolio uses role-based demo entry and per-revision SQLite. The
+The hosted portfolio uses role-selected Microsoft SSO and persistent Azure Files-backed SQLite. The
 Gemini key is stored as a Container
 Apps secret and is referenced by the backend environment without appearing in the
 manifest. The active revision is kept at one replica because pipeline tasks run in
@@ -21,9 +21,9 @@ Deployment assets:
 - `.azure/techsignal.containerapp.yaml` defines the two containers, ingress,
   resource limits, secret references and one-replica policy.
 - `/health/ready` checks the backend database directly; `/api/auth/providers`,
-  `/api/auth/demo` and the authenticated dashboard form the external smoke path.
+  Microsoft SSO and the authenticated dashboard form the external smoke path.
 
-The deployment is verified with role login, dashboard reads, navigation/sign-out,
+The deployment is verified with role-selected SSO, dashboard reads, navigation/sign-out,
 Gemini generation and the Microsoft Entra authorization redirect. GitHub Pages
 uses `VITE_API_BASE` to call the Azure API and `HashRouter` for static-host routes.
 

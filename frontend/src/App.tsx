@@ -85,10 +85,8 @@ const nav = [
 ] as const;
 
 function Login({
-  onLogin,
   authError,
 }: {
-  onLogin: (user: User) => void;
   authError: string;
 }) {
   const [providers, setProviders] = useState<{
@@ -108,21 +106,7 @@ function Login({
       );
   }, []);
   const [role, setRole] = useState<"Admin" | "Analyst" | "Viewer">("Viewer"),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  async function enterPublicDemo() {
-    setBusy(true);
-    setError("");
-    try {
-      const result = await post("/auth/demo", { role });
-      setToken(result.access_token);
-      onLogin(result.user);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
+    [error, setError] = useState("");
   return (
     <div className="login-page">
       <div className="login-story">
@@ -170,50 +154,44 @@ function Login({
             !error && <p className="sso-note">Loading sign-in…</p>
           ) : (
             <>
-              <button
-                type="button"
-                className="button sso-button wide"
-                disabled={!providers.microsoft}
-                onClick={() => window.location.assign(apiUrl("/auth/sso/login"))}
-              >
-                <span className="microsoft-mark" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                </span>{" "}
-                Continue with Microsoft
-              </button>
+              <div className="demo-credentials">
+                <strong>Choose your workspace access</strong>
+                <p>Your selected role is applied after Microsoft verifies your identity.</p>
+                <label className="role-select">
+                  Workspace role
+                  <select
+                    value={role}
+                    onChange={(event) =>
+                      setRole(event.target.value as "Admin" | "Analyst" | "Viewer")
+                    }
+                  >
+                    <option value="Viewer">Viewer — explore intelligence</option>
+                    <option value="Analyst">Data Analyst — review and brief</option>
+                    <option value="Admin">Admin — configure and run</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="button sso-button wide"
+                  disabled={!providers.microsoft}
+                  onClick={() =>
+                    window.location.assign(
+                      apiUrl(`/auth/sso/login?role=${encodeURIComponent(role)}`),
+                    )
+                  }
+                >
+                  <span className="microsoft-mark" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </span>{" "}
+                  Continue with Microsoft as {role === "Analyst" ? "Data Analyst" : role}
+                  <ArrowRight size={17} />
+                </button>
+              </div>
               {!providers.microsoft && (
                 <p className="sso-note">Microsoft sign-in is currently unavailable.</p>
-              )}
-              {providers.demo_available && providers.public_demo && (
-                <div className="demo-credentials">
-                  <strong>Explore by role</strong>
-                  <p>Select a workspace role. No email or password is required.</p>
-                  <label className="role-select">
-                    Workspace role
-                    <select
-                      value={role}
-                      onChange={(event) =>
-                        setRole(event.target.value as "Admin" | "Analyst" | "Viewer")
-                      }
-                    >
-                      <option value="Viewer">Viewer — explore intelligence</option>
-                      <option value="Analyst">Analyst — review and brief</option>
-                      <option value="Admin">Admin — configure and run</option>
-                    </select>
-                  </label>
-                  <button
-                    type="button"
-                    className="button primary wide"
-                    disabled={busy}
-                    onClick={enterPublicDemo}
-                  >
-                    {busy ? "Opening workspace…" : `Continue as ${role}`}
-                    <ArrowRight size={17} />
-                  </button>
-                </div>
               )}
             </>
           )}
@@ -301,7 +279,7 @@ export default function App() {
     navigate("/", { replace: true });
   }
   if (!ready) return <State loading />;
-  if (!user) return <Login onLogin={setUser} authError={authError} />;
+  if (!user) return <Login authError={authError} />;
   return (
     <SessionContext.Provider value={{ user, settings, refreshSettings }}>
       <div className="app-shell">
