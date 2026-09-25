@@ -6,11 +6,23 @@ An evidence-first personal project for scouting emerging technologies.
 It connects research, organizations and market signals to transparent scores,
 analyst-reviewed horizons, an interactive radar and decision-ready briefings.
 
-**Live app:** [techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io](https://techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io)
+**Public frontend:** [TechSignal on GitHub Pages](https://mirza019.github.io/TechSignal-AI-Powered-Emerging-Technology-Intelligence-Platform/)
 
-Use **Sign in to TechSignal** to enter the hosted portfolio. The deployment runs
-the React frontend and FastAPI backend together in Azure Container Apps and keeps
-Admin/Analyst credentials private.
+**Full Azure app:** [TechSignal on Azure Container Apps](https://techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io)
+
+The GitHub Pages frontend connects to the FastAPI service hosted in Azure. The
+Azure link serves the same frontend and API from one Container App.
+
+## Login
+
+No email or password is required for the portfolio workspace:
+
+1. Open either live link.
+2. Select Viewer, Analyst or Admin from **Workspace role**.
+3. Choose **Continue as …**.
+
+**Continue with Microsoft** opens the Microsoft Entra sign-in flow. Tenant users
+are assigned a role from Entra application roles, with Viewer as the default.
 
 ## Quick start
 
@@ -56,15 +68,6 @@ combines installation, migration and both servers for subsequent local runs.
 Do not copy the Docker DATABASE_URL unchanged into a non-Docker local `.env`.
 For local PostgreSQL use your actual host/credentials. Configuration reads the
 repository-root `.env` when the backend is launched from `backend/`.
-
-| Demo role | Email | Password |
-|---|---|---|
-| Admin | `admin@techsignal.local` | `RadarDemo2026!` |
-| Analyst | `analyst@techsignal.local` | `RadarDemo2026!` |
-| Viewer | `viewer@techsignal.local` | `RadarDemo2026!` |
-
-These credentials apply only to seeded development databases. Production startup
-rejects demo mode, demo seeding and the default application secret.
 
 ## Why it exists / portfolio context
 
@@ -357,7 +360,7 @@ See the [Azure deployment guide](docs/azure-deployment.md).
 
 ## Microsoft single sign-on
 
-Microsoft Entra SSO is implemented alongside local accounts. See [SSO setup](docs/sso-setup.md)
-for tenant registration, redirect URLs and role mapping. The button stays disabled
-until credentials are configured. The sidebar scrolls independently, with a pinned
-Sign out button and a header shortcut on small screens.
+Microsoft Entra SSO uses authorization code flow with PKCE, signed state, nonce,
+tenant/audience validation and single-use token exchange. See [SSO setup](docs/sso-setup.md)
+for role mapping. The sidebar scrolls independently, with a pinned Sign out button
+and a header shortcut on small screens.

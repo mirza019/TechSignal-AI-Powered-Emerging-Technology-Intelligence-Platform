@@ -78,13 +78,19 @@ def login(body: Login, request: Request, db: Session = Depends(get_db)):
     }
 
 
+class DemoLoginInput(BaseModel):
+    role: Literal["Admin", "Analyst", "Viewer"] = "Viewer"
+
+
 @router.post("/auth/demo")
-def demo_login(request: Request, db: Session = Depends(get_db)):
+def demo_login(body: DemoLoginInput, request: Request, db: Session = Depends(get_db)):
     cfg = get_settings()
     if not (cfg.public_demo and cfg.seed_demo and cfg.environment != "production"):
         raise HTTPException(404, "Public demo sign-in is not enabled")
     limiter.check("demo-login:" + (request.client.host if request.client else "unknown"), 20)
-    user = db.scalar(select(User).where(User.email == "viewer@techsignal.local", User.active.is_(True)))
+    user = db.scalar(
+        select(User).where(User.email == f"{body.role.lower()}@techsignal.local", User.active.is_(True))
+    )
     if not user:
         raise HTTPException(503, "Demo workspace is not ready")
     return {

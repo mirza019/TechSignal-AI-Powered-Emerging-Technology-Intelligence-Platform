@@ -23,14 +23,16 @@ def test_login_and_read_endpoints(client, tokens):
         assert response.status_code == 200, (path, response.text)
 
 
-def test_public_demo_login_is_viewer_only(client, monkeypatch):
+def test_public_demo_role_login(client, monkeypatch):
     from app.config import get_settings
 
     monkeypatch.setattr(get_settings(), "public_demo", True)
     monkeypatch.setattr(get_settings(), "seed_demo", True)
-    result = client.post("/api/auth/demo", json={})
-    assert result.status_code == 200
-    assert result.json()["user"]["role"] == "Viewer"
+    for role in ["Viewer", "Analyst", "Admin"]:
+        result = client.post("/api/auth/demo", json={"role": role})
+        assert result.status_code == 200
+        assert result.json()["user"]["role"] == role
+    assert client.post("/api/auth/demo", json={"role": "Owner"}).status_code == 422
 
 
 def test_rbac_and_writes(client, tokens):

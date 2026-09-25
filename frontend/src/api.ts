@@ -1,4 +1,6 @@
 let token = sessionStorage.getItem("techsignal-token") || "";
+const apiBase = (import.meta.env.VITE_API_BASE || "/api").replace(/\/$/, "");
+export const apiUrl = (path: string) => `${apiBase}${path}`;
 export function setToken(value: string) {
   token = value;
   value
@@ -9,7 +11,7 @@ export async function api<T = any>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -34,7 +36,7 @@ export const post = <T = any>(path: string, body: unknown) =>
 export const put = <T = any>(path: string, body: unknown) =>
   api<T>(path, { method: "PUT", body: JSON.stringify(body) });
 export async function download(id: string, format: "pdf" | "md") {
-  const response = await fetch(`/api/reports/${id}/export?format=${format}`, {
+  const response = await fetch(apiUrl(`/reports/${id}/export?format=${format}`), {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) throw new Error("Report download failed");

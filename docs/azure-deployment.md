@@ -4,11 +4,12 @@ The portfolio deployment uses one Azure Container App with a public frontend and
 an internal backend sidecar. Nginx proxies `/api` to the backend over localhost.
 The GitHub workflow publishes both images to GitHub Container Registry.
 
-Live URL: [TechSignal on Azure](https://techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io)
+Live API/app URL: [TechSignal on Azure](https://techsignal.icywater-653510cb.polandcentral.azurecontainerapps.io)
 
-The hosted portfolio uses a seeded, read-only Viewer entry and per-revision SQLite.
-This keeps the public demo small and prevents anonymous writes. Admin and Analyst
-passwords are random Azure secrets. The Gemini key is also stored as a Container
+Public frontend: [TechSignal on GitHub Pages](https://mirza019.github.io/TechSignal-AI-Powered-Emerging-Technology-Intelligence-Platform/)
+
+The hosted portfolio uses role-based demo entry and per-revision SQLite. The
+Gemini key is stored as a Container
 Apps secret and is referenced by the backend environment without appearing in the
 manifest. The active revision is kept at one replica because pipeline tasks run in
 the API process.
@@ -22,10 +23,9 @@ Deployment assets:
 - `/health/ready` checks the backend database directly; `/api/auth/providers`,
   `/api/auth/demo` and the authenticated dashboard form the external smoke path.
 
-The live deployment was verified with a real Viewer login, dashboard read,
-navigation/sign-out browser flow and Gemini request. Microsoft Entra SSO code is
-deployed but remains disabled until an app registration supplies tenant, client
-and client-secret values.
+The deployment is verified with role login, dashboard reads, navigation/sign-out,
+Gemini generation and the Microsoft Entra authorization redirect. GitHub Pages
+uses `VITE_API_BASE` to call the Azure API and `HashRouter` for static-host routes.
 
 ## Full production deployment
 

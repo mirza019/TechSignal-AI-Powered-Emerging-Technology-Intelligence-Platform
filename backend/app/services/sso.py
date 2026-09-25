@@ -70,7 +70,13 @@ def start_sso(request: Request):
         f"https://login.microsoftonline.com/{cfg.entra_tenant_id}/oauth2/v2.0/authorize?{urlencode(params)}", status_code=302
     )
     response.set_cookie(
-        COOKIE, state_cookie, max_age=600, httponly=True, secure=cfg.environment == "production", samesite="lax", path="/api/auth/sso"
+        COOKIE,
+        state_cookie,
+        max_age=600,
+        httponly=True,
+        secure=cfg.entra_redirect_uri.startswith("https://"),
+        samesite="lax",
+        path="/api/auth/sso",
     )
     return response
 

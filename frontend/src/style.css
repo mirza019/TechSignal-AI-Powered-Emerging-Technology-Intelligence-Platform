@@ -2035,6 +2035,18 @@ tbody tr:hover {
   font-size: 10px;
   margin: 9px 0;
 }
+.role-select {
+  display: block;
+  margin: 16px 0;
+  color: #718764;
+}
+.role-select select {
+  padding: 12px;
+  border-color: #d7e4cc;
+}
+.demo-credentials > .button {
+  padding: 13px;
+}
 .demo-credentials code {
   font-size: 9px;
 }

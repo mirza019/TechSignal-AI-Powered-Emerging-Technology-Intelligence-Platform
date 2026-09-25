@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, createContext, useContext } from "react";
-import type { FormEvent } from "react";
 import {
   NavLink,
   Routes,
@@ -28,7 +27,7 @@ import {
   Activity,
   ChevronDown,
 } from "lucide-react";
-import { api, post, setToken } from "./api";
+import { api, apiUrl, post, setToken } from "./api";
 import type { User, Json } from "./types";
 import { State } from "./components/ui";
 import Dashboard from "./pages/Dashboard";
@@ -101,42 +100,21 @@ function Login({
     api<{ microsoft: boolean; demo_available: boolean; public_demo: boolean }>(
       "/auth/providers",
     )
-      .then((p) => {
-        setProviders(p);
-        if (p.demo_available && !p.public_demo) {
-          setEmail("analyst@techsignal.local");
-          setPassword("RadarDemo2026!");
-        }
-      })
+      .then(setProviders)
       .catch(() =>
         setError(
-          "Sign-in options could not be loaded. You can still use your local account.",
+          "Sign-in options could not be loaded. Please refresh and try again.",
         ),
       );
   }, []);
-  const [email, setEmail] = useState(""),
-    [password, setPassword] = useState(""),
+  const [role, setRole] = useState<"Admin" | "Analyst" | "Viewer">("Viewer"),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      const result = await post("/auth/login", { email, password });
-      setToken(result.access_token);
-      onLogin(result.user);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
   async function enterPublicDemo() {
     setBusy(true);
     setError("");
     try {
-      const result = await post("/auth/demo", {});
+      const result = await post("/auth/demo", { role });
       setToken(result.access_token);
       onLogin(result.user);
     } catch (e) {
@@ -177,39 +155,26 @@ function Login({
             <span className="orbit-dot three" />
           </div>
         </div>
-        <small>Evidence-first technology intelligence for personal research.</small>
+        <small>
+          Evidence-first technology intelligence for personal research.<br />
+          Designed by Mirza Shaheen Iqubal
+        </small>
       </div>
       <div className="login-form-wrap">
-        <form onSubmit={submit} className="login-form">
+        <div className="login-form">
           <BadgeLabel />
           <h2>Welcome to TechSignal</h2>
           <p>Your workspace for evidence-backed technology decisions.</p>
           <State error={error || authError} />
           {!providers ? (
             !error && <p className="sso-note">Loading sign-in…</p>
-          ) : providers.public_demo ? (
-            <div className="demo-credentials">
-              <strong>Technology intelligence workspace</strong>
-              <p>Continue directly to the TechSignal portfolio.</p>
-              <button
-                type="button"
-                className="button sso-button wide"
-                disabled={busy}
-                onClick={enterPublicDemo}
-              >
-                {busy ? "Signing in…" : "Sign in to TechSignal"}
-                <ArrowRight size={17} />
-              </button>
-            </div>
           ) : (
             <>
               <button
                 type="button"
                 className="button sso-button wide"
                 disabled={!providers.microsoft}
-                onClick={() => {
-                  window.location.assign("/api/auth/sso/login");
-                }}
+                onClick={() => window.location.assign(apiUrl("/auth/sso/login"))}
               >
                 <span className="microsoft-mark" aria-hidden="true">
                   <i />
@@ -220,47 +185,39 @@ function Login({
                 Continue with Microsoft
               </button>
               {!providers.microsoft && (
-                <p className="sso-note">
-                  Microsoft SSO is ready to configure. Your administrator must
-                  connect an Entra tenant.
-                </p>
+                <p className="sso-note">Microsoft sign-in is currently unavailable.</p>
               )}
-              <div className="login-divider">
-                <span>or sign in with your workspace account</span>
-              </div>
-              <label>
-                Email address
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="username"
-                />
-              </label>
-              <label>
-                Password
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                />
-              </label>
-              <button className="button primary wide" disabled={busy}>
-                {busy ? "Signing in…" : "Enter workspace"}
-                <ArrowRight size={17} />
-              </button>
-              {providers.demo_available && (
+              {providers.demo_available && providers.public_demo && (
                 <div className="demo-credentials">
-                  <strong>Local development accounts</strong>
-                  <p>Use the seeded account credentials from the README.</p>
+                  <strong>Explore by role</strong>
+                  <p>Select a workspace role. No email or password is required.</p>
+                  <label className="role-select">
+                    Workspace role
+                    <select
+                      value={role}
+                      onChange={(event) =>
+                        setRole(event.target.value as "Admin" | "Analyst" | "Viewer")
+                      }
+                    >
+                      <option value="Viewer">Viewer — explore intelligence</option>
+                      <option value="Analyst">Analyst — review and brief</option>
+                      <option value="Admin">Admin — configure and run</option>
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="button primary wide"
+                    disabled={busy}
+                    onClick={enterPublicDemo}
+                  >
+                    {busy ? "Opening workspace…" : `Continue as ${role}`}
+                    <ArrowRight size={17} />
+                  </button>
                 </div>
               )}
             </>
           )}
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -509,6 +466,7 @@ export default function App() {
                 ? "All sample intelligence is synthetic."
                 : "AI interpretation requires analyst review."}
             </span>
+            <span>Designed by Mirza Shaheen Iqubal</span>
           </footer>
         </div>
       </div>
