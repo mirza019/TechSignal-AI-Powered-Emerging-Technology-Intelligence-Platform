@@ -1,9 +1,9 @@
-let token = sessionStorage.getItem("radar-token") || "";
+let token = sessionStorage.getItem("techsignal-token") || "";
 export function setToken(value: string) {
   token = value;
   value
-    ? sessionStorage.setItem("radar-token", value)
-    : sessionStorage.removeItem("radar-token");
+    ? sessionStorage.setItem("techsignal-token", value)
+    : sessionStorage.removeItem("techsignal-token");
 }
 export async function api<T = any>(
   path: string,
@@ -20,7 +20,7 @@ export async function api<T = any>(
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if (response.status === 401)
-      window.dispatchEvent(new Event("radar-unauthorized"));
+      window.dispatchEvent(new Event("techsignal-unauthorized"));
     throw new Error(
       typeof body.detail === "string"
         ? body.detail
@@ -41,7 +41,7 @@ export async function download(id: string, format: "pdf" | "md") {
   const url = URL.createObjectURL(await response.blob());
   const a = document.createElement("a");
   a.href = url;
-  a.download = `grid-radar-${id}.${format}`;
+  a.download = `techsignal-${id}.${format}`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

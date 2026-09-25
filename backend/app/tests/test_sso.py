@@ -27,7 +27,7 @@ def test_pkce_state_and_cookie(client, monkeypatch):
     cfg = configure(monkeypatch)
     response = client.get("/api/auth/sso/login", follow_redirects=False)
     query = parse_qs(urlparse(response.headers["location"]).query)
-    cookie = jwt.decode(client.cookies.get(sso.COOKIE), cfg.app_secret, algorithms=["HS256"], issuer="grid-radar-sso")
+    cookie = jwt.decode(client.cookies.get(sso.COOKIE), cfg.app_secret, algorithms=["HS256"], issuer="techsignal-sso")
     assert query["state"] == [cookie["state"]]
     assert query["nonce"] == [cookie["nonce"]]
     assert query["code_challenge_method"] == ["S256"]

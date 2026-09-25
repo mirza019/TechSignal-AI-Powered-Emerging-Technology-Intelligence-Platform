@@ -32,7 +32,7 @@ def get_json(url: str, params=None, headers=None):
             _last_request[host] = time.monotonic()
         try:
             with httpx.Client(timeout=30, follow_redirects=False) as client:
-                response = client.get(url, params=params, headers={"User-Agent": "GridRadarPortfolio/1.0", **(headers or {})})
+                response = client.get(url, params=params, headers={"User-Agent": "TechSignal/1.0", **(headers or {})})
                 if response.status_code in (429, 500, 502, 503, 504) and attempt < 3:
                     retry = response.headers.get("Retry-After", "")
                     try:

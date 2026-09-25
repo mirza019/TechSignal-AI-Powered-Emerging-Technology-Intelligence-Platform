@@ -20,7 +20,7 @@ from app.ai.service import (
 from app.ai.retrieval import retrieve
 from app.schemas import BriefingOutput
 
-DISCLAIMER = "Portfolio horizon methodology — not Siemens Energy internal methodology."
+METHODOLOGY = "Configurable H1–H4 technology horizon model."
 
 
 def generate_report(db, request, actor, is_demo, provider=None):
@@ -101,7 +101,7 @@ def generate_report(db, request, actor, is_demo, provider=None):
         f"# {request.kind}",
         f"## {subject}",
         f"Generated {now().date()} | {'SYNTHETIC DEMO DATA' if is_demo else 'PUBLIC EVIDENCE'}",
-        DISCLAIMER,
+        METHODOLOGY,
         "## Executive Summary",
         output.executive_summary,
         "## Organization Overview",
@@ -213,14 +213,14 @@ def render_pdf(report):
         canvas.drawString(
             36,
             24,
-            "Grid Technology Intelligence Radar | Portfolio methodology | " + ("Synthetic demo" if report.is_demo else "Public evidence"),
+            "TechSignal | AI-Powered Emerging Technology Intelligence | " + ("Synthetic demo" if report.is_demo else "Public evidence"),
         )
         canvas.drawRightString(A4[0] - 36, 24, str(doc.page))
 
     SimpleDocTemplate(
         buffer,
         title=report.title,
-        author="Grid Technology Intelligence Radar",
+        author="TechSignal",
         pagesize=A4,
         rightMargin=40,
         leftMargin=40,

@@ -14,7 +14,7 @@ from app.services.data_mode import data_mode
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Grid Radar operations")
+    parser = argparse.ArgumentParser(description="TechSignal operations")
     parser.add_argument(
         "command",
         choices=[

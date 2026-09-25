@@ -108,6 +108,64 @@ def test_bad_staged_record_rejects_entire_batch(factory):
         assert db.scalar(select(func.count()).select_from(Evidence)) == baseline
 
 
+def test_pipeline_keeps_successful_results_when_one_query_is_rate_limited(factory):
+    import httpx
+
+    class PartialProvider:
+        calls = 0
+
+        def collect(self, technology_id, query, limit):
+            self.calls += 1
+            if self.calls > 1:
+                request = httpx.Request("GET", "https://provider.example/api")
+                response = httpx.Response(429, request=request)
+                raise httpx.HTTPStatusError("rate limited", request=request, response=response)
+            return [
+                EvidenceInput(
+                    technology_id=technology_id,
+                    source_type="paper",
+                    source_id="partial:1",
+                    title="A retrieved provider record",
+                    url="https://provider.example/record/1",
+                    content="Evidence collected before another query was throttled.",
+                    published_at=now(),
+                    provider="Mock",
+                )
+            ]
+
+    with factory() as db:
+        run = create_run(db, "openalex", None, 1)
+        run_id = run.id
+    execute_run(run_id, factory, provider_override=PartialProvider())
+    with factory() as db:
+        run = db.get(PipelineRun, run_id)
+        source = db.scalar(
+            select(PipelineStep).where(PipelineStep.run_id == run_id, PipelineStep.name == "Source Collection")
+        )
+        assert run.status == "Successful"
+        assert source.processed == 1
+        assert "skipped queries" in source.error
+
+
+def test_pipeline_explains_provider_rate_limit(factory):
+    import httpx
+
+    class ThrottledProvider:
+        def collect(self, technology_id, query, limit):
+            request = httpx.Request("GET", "https://provider.example/api")
+            response = httpx.Response(429, request=request)
+            raise httpx.HTTPStatusError("rate limited", request=request, response=response)
+
+    with factory() as db:
+        run = create_run(db, "gdelt", db.scalar(select(Technology.id)), 1)
+        run_id = run.id
+    execute_run(run_id, factory, provider_override=ThrottledProvider())
+    with factory() as db:
+        run = db.get(PipelineRun, run_id)
+        assert run.status == "Failed"
+        assert "rate-limited" in run.error
+
+
 def test_ai_citations_and_no_automatic_horizon_overwrite(db):
     technology = db.scalar(select(Technology))
     user = db.scalar(select(User).where(User.role == "Analyst"))

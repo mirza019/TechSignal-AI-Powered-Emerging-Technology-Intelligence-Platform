@@ -4,7 +4,7 @@ from app.models import Technology, Evidence
 
 def test_login_and_read_endpoints(client, tokens):
     assert client.get("/api/technologies").status_code == 401
-    result = client.post("/api/auth/login", json={"email": "viewer@radar.local", "password": "RadarDemo2026!"})
+    result = client.post("/api/auth/login", json={"email": "viewer@techsignal.local", "password": "RadarDemo2026!"})
     assert result.status_code == 200 and result.json()["access_token"]
     for path in [
         "/dashboard",
@@ -21,6 +21,16 @@ def test_login_and_read_endpoints(client, tokens):
     ]:
         response = client.get("/api" + path, headers=tokens["Viewer"])
         assert response.status_code == 200, (path, response.text)
+
+
+def test_public_demo_login_is_viewer_only(client, monkeypatch):
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "public_demo", True)
+    monkeypatch.setattr(get_settings(), "seed_demo", True)
+    result = client.post("/api/auth/demo", json={})
+    assert result.status_code == 200
+    assert result.json()["user"]["role"] == "Viewer"
 
 
 def test_rbac_and_writes(client, tokens):
@@ -65,7 +75,7 @@ def test_report_export_and_query(client, tokens, db):
     assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
     markdown = client.get(f"/api/reports/{id}/export?format=md", headers=tokens["Viewer"])
     assert "Evidence Sources" in markdown.text
-    assert "not Siemens Energy internal methodology" in markdown.text
+    assert "Configurable H1–H4 technology horizon model" in markdown.text
 
 
 def test_invalid_weights_and_duplicate_technology(client, tokens):

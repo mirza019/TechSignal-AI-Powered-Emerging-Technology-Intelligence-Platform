@@ -22,6 +22,10 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-development}
       DEMO_MODE: ${DEMO_MODE:-true}
       SEED_DEMO: ${SEED_DEMO:-true}
+      PUBLIC_DEMO: ${PUBLIC_DEMO:-false}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-RadarDemo2026!}
+      DEMO_ANALYST_PASSWORD: ${DEMO_ANALYST_PASSWORD:-RadarDemo2026!}
+      DEMO_VIEWER_PASSWORD: ${DEMO_VIEWER_PASSWORD:-RadarDemo2026!}
       ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}
       ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
       ENTRA_CLIENT_SECRET: ${ENTRA_CLIENT_SECRET:-}
@@ -38,7 +42,7 @@ services:
       ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-false}
       CORS_ORIGINS: '["http://localhost:8080","http://localhost:5173"]'
       SCRAPER_ALLOWED_DOMAINS: ${SCRAPER_ALLOWED_DOMAINS:-[]}
-      SCRAPER_USER_AGENT: ${SCRAPER_USER_AGENT:-GridRadarPortfolio/1.0}
+      SCRAPER_USER_AGENT: ${SCRAPER_USER_AGENT:-TechSignal/1.0}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -50,6 +54,9 @@ services:
       dockerfile: frontend/Dockerfile
     ports:
       - "127.0.0.1:8080:8080"
+    environment:
+      BACKEND_HOST: backend:8000
+      NGINX_ENVSUBST_FILTER: BACKEND_HOST
     depends_on:
       - backend
 volumes:

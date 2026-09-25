@@ -1,7 +1,7 @@
 # Trust model, score interpretation and operations
 
 ## H1–H4
-**Portfolio horizon methodology — not Siemens Energy internal methodology.**
+The H1–H4 model is configurable for personal technology scouting workflows.
 Defaults: H1 relatively mature (maturity ≥80), H2 increasing practical activity
 (≥55), H3 promising but uncertain (≥30), H4 exploratory (≥0). Year labels are
 illustrative portfolio settings, not predictions. Admins edit definitions and

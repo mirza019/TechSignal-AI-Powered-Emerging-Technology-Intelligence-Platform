@@ -1,4 +1,5 @@
 import logging
+import httpx
 from sqlalchemy import select
 from app.db import SessionLocal
 from app.config import get_settings
@@ -53,6 +54,7 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
         if run_provider != "web" and not technologies:
             raise ValueError("No active technologies matched this pipeline run")
         raw_records = []
+        collection_warnings = []
         try:
             if run_provider == "web":
                 scraper = PublicScraper()
@@ -72,7 +74,21 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
                         if run_provider == "gdelt"
                         else " OR ".join(keywords[:4]) or technology.name
                     )
-                    raw_records.extend(provider.collect(technology.id, query, limit))
+                    try:
+                        raw_records.extend(provider.collect(technology.id, query, limit))
+                    except (httpx.HTTPError, RuntimeError) as exc:
+                        status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
+                        detail = f"HTTP {status}" if status else type(exc).__name__
+                        collection_warnings.append(f"{technology.name}: {detail}")
+                        logger.warning(
+                            "Provider query skipped after bounded retries",
+                            extra={"run_id": run_id, "provider": run_provider, "technology_id": technology.id},
+                        )
+                if collection_warnings and not raw_records:
+                    raise RuntimeError(
+                        f"{run_provider.title()} did not return data after bounded retries. "
+                        "The public service may be rate-limited; retry one technology later."
+                    )
             if get_settings().enable_semantic_scholar and run_provider == "openalex":
                 enrichment = SemanticScholarProvider()
                 for record in raw_records:
@@ -85,6 +101,9 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
                 db.add(StagedEvidence(run_id=run_id, payload=payload))
             steps[0].status = "Successful"
             steps[0].processed = len(raw_records)
+            if collection_warnings:
+                noun = "query" if len(collection_warnings) == 1 else "queries"
+                steps[0].error = f"Completed with {len(collection_warnings)} skipped {noun} after provider retries."
             steps[0].ended_at = now()
             db.commit()
             staged = db.scalars(select(StagedEvidence).where(StagedEvidence.run_id == run_id)).all()

@@ -44,10 +44,10 @@ async def lifespan(app):
 
 
 app = FastAPI(
-    title="Grid Technology Intelligence Radar",
+    title="TechSignal — AI-Powered Emerging Technology Intelligence Platform",
     version="1.0.0",
     lifespan=lifespan,
-    description="Evidence-grounded portfolio intelligence. H1–H4 is not Siemens Energy internal methodology.",
+    description="Evidence-grounded emerging technology scouting, signals, radar assessments and briefings.",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -88,7 +88,7 @@ async def provider_error(request, exc):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "grid-radar"}
+    return {"status": "ok", "service": "techsignal"}
 
 
 @app.get("/health/ready")

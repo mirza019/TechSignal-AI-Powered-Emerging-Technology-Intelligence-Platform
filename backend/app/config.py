@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     environment: str = "development"
     demo_mode: bool = True
     seed_demo: bool = True
+    public_demo: bool = False
+    demo_admin_password: str = "RadarDemo2026!"
+    demo_analyst_password: str = "RadarDemo2026!"
+    demo_viewer_password: str = "RadarDemo2026!"
     entra_tenant_id: str = ""
     entra_client_id: str = ""
     entra_client_secret: str = ""
@@ -31,7 +35,7 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8080"]
     scraper_allowed_domains: list[str] = []
-    scraper_user_agent: str = "GridRadarPortfolio/1.0 (public research)"
+    scraper_user_agent: str = "TechSignal/1.0 (public research)"
     scraper_interval: float = 2.0
 
     @model_validator(mode="after")

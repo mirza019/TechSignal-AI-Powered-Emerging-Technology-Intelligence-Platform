@@ -95,13 +95,16 @@ function Login({
   const [providers, setProviders] = useState<{
     microsoft: boolean;
     demo_available: boolean;
+    public_demo: boolean;
   } | null>(null);
   useEffect(() => {
-    api<{ microsoft: boolean; demo_available: boolean }>("/auth/providers")
+    api<{ microsoft: boolean; demo_available: boolean; public_demo: boolean }>(
+      "/auth/providers",
+    )
       .then((p) => {
         setProviders(p);
-        if (p.demo_available) {
-          setEmail("analyst@radar.local");
+        if (p.demo_available && !p.public_demo) {
+          setEmail("analyst@techsignal.local");
           setPassword("RadarDemo2026!");
         }
       })
@@ -129,6 +132,19 @@ function Login({
       setBusy(false);
     }
   }
+  async function enterPublicDemo() {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await post("/auth/demo", {});
+      setToken(result.access_token);
+      onLogin(result.user);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <div className="login-page">
       <div className="login-story">
@@ -137,7 +153,7 @@ function Login({
             <Radar size={28} />
           </span>
           <span>
-            grid<span className="brand-light">radar</span>
+            Tech<span className="brand-light">Signal</span>
           </span>
         </div>
         <div className="login-copy">
@@ -161,15 +177,12 @@ function Login({
             <span className="orbit-dot three" />
           </div>
         </div>
-        <small>
-          Portfolio horizon methodology — not Siemens Energy internal
-          methodology.
-        </small>
+        <small>Evidence-first technology intelligence for personal research.</small>
       </div>
       <div className="login-form-wrap">
         <form onSubmit={submit} className="login-form">
           <BadgeLabel />
-          <h2>Welcome to Grid Radar</h2>
+          <h2>Welcome to TechSignal</h2>
           <p>Your workspace for evidence-backed technology decisions.</p>
           <button
             type="button"
@@ -222,7 +235,22 @@ function Login({
             {busy ? "Signing in…" : "Enter workspace"}
             <ArrowRight size={17} />
           </button>
-          {providers?.demo_available && (
+          {providers?.public_demo && (
+            <div className="demo-credentials">
+              <strong>Explore TechSignal</strong>
+              <p>Open the hosted portfolio in a read-only Viewer workspace.</p>
+              <button
+                type="button"
+                className="button primary wide"
+                disabled={busy}
+                onClick={enterPublicDemo}
+              >
+                Explore read-only demo
+                <ArrowRight size={17} />
+              </button>
+            </div>
+          )}
+          {providers?.demo_available && !providers.public_demo && (
             <div className="demo-credentials">
               <strong>Explore the portfolio demo</strong>
               <p>
@@ -237,7 +265,7 @@ function Login({
                       email.startsWith(role.toLowerCase()) ? "selected" : ""
                     }
                     onClick={() => {
-                      setEmail(`${role.toLowerCase()}@radar.local`);
+                      setEmail(`${role.toLowerCase()}@techsignal.local`);
                       setPassword("RadarDemo2026!");
                     }}
                   >
@@ -302,7 +330,7 @@ export default function App() {
         .finally(() => setReady(true));
       return;
     }
-    if (!sessionStorage.getItem("radar-token")) {
+    if (!sessionStorage.getItem("techsignal-token")) {
       setReady(true);
       return;
     }
@@ -319,8 +347,8 @@ export default function App() {
       setToken("");
       setUser(null);
     };
-    window.addEventListener("radar-unauthorized", handler);
-    return () => window.removeEventListener("radar-unauthorized", handler);
+    window.addEventListener("techsignal-unauthorized", handler);
+    return () => window.removeEventListener("techsignal-unauthorized", handler);
   }, []);
   useEffect(() => {
     setMenu(false);
@@ -345,14 +373,14 @@ export default function App() {
               <Radar size={25} />
             </span>
             <span>
-              grid<span className="brand-light">radar</span>
-              <small>TECHNOLOGY INTELLIGENCE</small>
+              Tech<span className="brand-light">Signal</span>
+              <small>EMERGING TECHNOLOGY INTELLIGENCE</small>
             </span>
           </Link>
           <div className="workspace-switch">
-            <span className="workspace-logo">G</span>
+            <span className="workspace-logo">T</span>
             <div>
-              Grid technologies<small>Portfolio workspace</small>
+              Emerging technologies<small>Intelligence workspace</small>
             </div>
             <ChevronDown size={14} />
           </div>
@@ -493,8 +521,7 @@ export default function App() {
           </main>
           <footer className="app-footer">
             <span>
-              <Activity size={13} /> Portfolio horizon methodology — not Siemens
-              Energy internal methodology.
+              <Activity size={13} /> Configurable H1–H4 technology horizons
             </span>
             <span>
               {settings.is_demo

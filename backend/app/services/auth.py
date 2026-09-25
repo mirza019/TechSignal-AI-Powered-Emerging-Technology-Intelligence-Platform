@@ -18,7 +18,7 @@ DUMMY_HASH = passwords.hash("not-a-real-account-password")
 
 def token_for(user: User):
     return jwt.encode(
-        {"sub": user.id, "exp": datetime.now(timezone.utc) + timedelta(hours=8), "iss": "grid-radar"},
+        {"sub": user.id, "exp": datetime.now(timezone.utc) + timedelta(hours=8), "iss": "techsignal"},
         get_settings().app_secret,
         algorithm="HS256",
     )
@@ -30,7 +30,7 @@ def current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer), db
             credentials.credentials if credentials else "",
             get_settings().app_secret,
             algorithms=["HS256"],
-            issuer="grid-radar",
+            issuer="techsignal",
             options={"require": ["sub", "exp", "iss"]},
         )
         user = db.get(User, claims["sub"])

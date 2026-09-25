@@ -1,4 +1,4 @@
-name: Validate Grid Radar
+name: Validate TechSignal
 on: [push, pull_request]
 jobs:
   backend:

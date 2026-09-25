@@ -1,14 +1,10 @@
-# Grid Technology Intelligence Radar
+# TechSignal
 
-An evidence-first portfolio platform for scouting emerging grid technologies.
+**AI-Powered Emerging Technology Intelligence Platform**
+
+An evidence-first personal project for scouting emerging technologies.
 It connects research, organizations and market signals to transparent scores,
 analyst-reviewed horizons, an interactive radar and decision-ready briefings.
-
-**Portfolio horizon methodology — not Siemens Energy internal methodology.**
-The configurable H1–H4 definitions are illustrative portfolio rules. This project
-neither reproduces nor claims knowledge of Siemens Energy's internal PRM radar.
-All bundled startup, institutional, research and news records are visibly
-**synthetic sample data**, not real current market intelligence.
 
 ## Quick start
 
@@ -57,9 +53,9 @@ repository-root `.env` when the backend is launched from `backend/`.
 
 | Demo role | Email | Password |
 |---|---|---|
-| Admin | `admin@radar.local` | `RadarDemo2026!` |
-| Analyst | `analyst@radar.local` | `RadarDemo2026!` |
-| Viewer | `viewer@radar.local` | `RadarDemo2026!` |
+| Admin | `admin@techsignal.local` | `RadarDemo2026!` |
+| Analyst | `analyst@techsignal.local` | `RadarDemo2026!` |
+| Viewer | `viewer@techsignal.local` | `RadarDemo2026!` |
 
 These credentials apply only to seeded development databases. Production startup
 rejects demo mode, demo seeding and the default application secret.
@@ -69,18 +65,8 @@ rejects demo mode, demo seeding and the default application secret.
 A technology analyst needs to answer what is changing, which organizations are
 involved, how strong the evidence is, and what to investigate next. A chatbot
 alone cannot maintain the structured relationships or decision history needed
-for that work. Grid Radar demonstrates research intelligence, data engineering,
+for that work. TechSignal combines research intelligence, data engineering,
 AI grounding, explainable assessment and analyst decision support in one system.
-
-### Fit for technology scouting work
-
-The application represents the outcomes of a grid-technology scouting role:
-monitoring selected domains, maintaining structured H1–H4 records, tracking
-startups and research institutions, preparing background notes and briefings, and
-using AI to improve search and synthesis. It demonstrates those capabilities
-through working software rather than mirroring a job description or claiming an
-employer's internal process. See the [role-alignment matrix](docs/role-alignment.md)
-for the evidence behind each capability and the boundaries of the portfolio claim.
 
 ## Features
 
@@ -112,7 +98,7 @@ for the evidence behind each capability and the boundaries of the portfolio clai
 
 ## Architecture
 
-![Grid Radar system architecture](docs/images/system-architecture.svg)
+![TechSignal system architecture](docs/images/system-architecture.svg)
 
 The diagram separates public/synthetic inputs, the transactional trust pipeline,
 the intelligence core and the analyst decision boundary. Generated text cannot
@@ -163,7 +149,7 @@ backend/
   alembic/versions/
 frontend/src/{components,pages}/
 data/startups.csv
-docs/{implementation-plan,security-and-methodology,role-alignment,azure-deployment}.md
+docs/{implementation-plan,security-and-methodology,verification-matrix,azure-deployment}.md
 docs/images/{system-architecture,intelligence-workflow}.svg
 scripts/{dev.sh,postgres_smoke.py}
 .github/workflows/ci.yml
@@ -281,7 +267,9 @@ See [.env.example](.env.example). Main settings:
 | DATABASE_URL | SQLAlchemy PostgreSQL URL; unset uses local SQLite |
 | APP_SECRET | JWT signing secret, unique ≥32 chars in production |
 | ENVIRONMENT | development / production |
-| DEMO_MODE / SEED_DEMO | Query synthetic records / initialize demo records |
+| DEMO_MODE / SEED_DEMO | Query sample records / initialize the portfolio dataset |
+| PUBLIC_DEMO | Enable one-click read-only Viewer access for a hosted portfolio |
+| DEMO_*_PASSWORD | Override seeded local-account passwords |
 | GEMINI_API_KEY / GEMINI_MODEL | Gemini credentials and model ID |
 | OPENALEX_API_KEY | Optional/configuration-dependent OpenAlex authentication |
 | SEMANTIC_SCHOLAR_API_KEY | Optional enrichment authentication |
@@ -325,7 +313,7 @@ npm test
 npm run build
 ```
 
-Tests use provider fixtures and no external API calls. Coverage includes seed
+Automated tests use provider fixtures and no external API calls. Coverage includes seed
 counts, normalization, deduplication/upserts, horizon logic, mode isolation,
 retrieval bounds, AI JSON/citations, rollback, invalid staging, login/RBAC,
 review citation ownership and PDF/Markdown exports. UI tests check source labels,
@@ -337,9 +325,9 @@ The local verification record is in [the implementation plan](docs/implementatio
 The detailed success, failure and grounding cases are in the
 [verification matrix](docs/verification-matrix.md).
 Local PostgreSQL 16 + pgvector migration, rollback, merge and retrieval checks passed.
-Live Gemini generation and OpenAlex collection were also exercised. Docker is not
-installed on the development host; Compose execution remains a CI/deployment check.
-GDELT currently returns provider rate-limit errors.
+Live Gemini generation and OpenAlex collection were also exercised. Provider calls
+use bounded retries, respect `Retry-After`, preserve partial results and surface a
+clear retry message when a public service is temporarily rate-limited.
 
 ## Scheduling / deployment
 
@@ -349,7 +337,7 @@ Manual admin runs execute as background tasks. Interrupted runs are marked faile
 on restart. Use one worker/replica; move to Celery/Redis and a dedicated scheduler
 before scaling. See [Azure Container Apps preparation](docs/azure-deployment.md).
 
-## Roadmap and honest boundaries
+## Roadmap
 
 - Distributed durable job queue and shared rate limiting.
 - Licensed EPO OPS ingestion and genuine longitudinal citation/patent signals.
@@ -358,9 +346,6 @@ before scaling. See [Azure Container Apps preparation](docs/azure-deployment.md)
   calibration of maturity/confidence/strategic relevance.
 - Snapshot-based institution/startup/citation activity; automated link-rot review.
 - Source coverage benchmarking, stronger production observability and load tests.
-
-This is runnable portfolio software with a production-style architecture, not a
-claim of a fully hardened enterprise deployment or validated market intelligence.
 
 ## Microsoft single sign-on
 

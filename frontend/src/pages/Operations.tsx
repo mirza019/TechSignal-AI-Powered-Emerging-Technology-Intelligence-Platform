@@ -658,7 +658,7 @@ export function SettingsPage() {
         description="Make the portfolio framework explicit, configurable and auditable."
       />
       <div className="notice">
-        Portfolio horizon methodology — not Siemens Energy internal methodology.
+        H1–H4 horizons, score weights and signal thresholds are configurable.
       </div>
       <State error={error} />
       {saved && <div className="success">{saved}</div>}

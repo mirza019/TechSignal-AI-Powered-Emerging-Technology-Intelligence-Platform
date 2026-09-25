@@ -41,7 +41,7 @@ from app.schemas import (
 )
 from app.services.auth import authenticate, token_for, current_user, require, limiter, passwords
 from app.services.views import technology_view, technology_detail, organization_view
-from app.services.reports import generate_report, render_pdf, DISCLAIMER
+from app.services.reports import generate_report, render_pdf, METHODOLOGY
 from app.utils.records import as_dict, normalize_name
 from app.repositories.evidence import evidence_for
 from app.pipelines.runner import create_run, execute_run
@@ -71,6 +71,22 @@ def audit(db, actor, action, entity_id, before=None, after=None):
 def login(body: Login, request: Request, db: Session = Depends(get_db)):
     limiter.check("login:" + (request.client.host if request.client else "unknown"), 10)
     user = authenticate(db, body.email, body.password)
+    return {
+        "access_token": token_for(user),
+        "token_type": "bearer",
+        "user": {k: v for k, v in as_dict(user).items() if k != "password_hash"},
+    }
+
+
+@router.post("/auth/demo")
+def demo_login(request: Request, db: Session = Depends(get_db)):
+    cfg = get_settings()
+    if not (cfg.public_demo and cfg.seed_demo and cfg.environment != "production"):
+        raise HTTPException(404, "Public demo sign-in is not enabled")
+    limiter.check("demo-login:" + (request.client.host if request.client else "unknown"), 20)
+    user = db.scalar(select(User).where(User.email == "viewer@techsignal.local", User.active.is_(True)))
+    if not user:
+        raise HTTPException(503, "Demo workspace is not ready")
     return {
         "access_token": token_for(user),
         "token_type": "bearer",
@@ -197,7 +213,7 @@ def review(id: str, body: ReviewInput, db: Session = Depends(get_db), user=Depen
 @router.get("/radar")
 def radar(db: Session = Depends(get_db), user=Depends(current_user)):
     return {
-        "methodology": DISCLAIMER,
+        "methodology": METHODOLOGY,
         "horizons": [as_dict(h) for h in db.scalars(select(Horizon).order_by(Horizon.display_order))],
         "technologies": [technology_view(db, t, mode(db)) for t in db.scalars(select(Technology).where(Technology.archived.is_(False)))],
         "history": [as_dict(h) for h in db.scalars(select(RadarHistory).order_by(RadarHistory.created_at.desc()).limit(250))],
@@ -377,7 +393,7 @@ def export_report(id: str, format: Literal["pdf", "md"] = "pdf", db: Session = D
     return Response(
         content,
         media_type="application/pdf" if format == "pdf" else "text/markdown",
-        headers={"Content-Disposition": f'attachment; filename="grid-radar-{report.id}.{format}"'},
+        headers={"Content-Disposition": f'attachment; filename="techsignal-{report.id}.{format}"'},
     )
 
 
@@ -385,7 +401,7 @@ def export_report(id: str, format: Literal["pdf", "md"] = "pdf", db: Session = D
 def settings(db: Session = Depends(get_db), user=Depends(current_user)):
     cfg = get_settings()
     return {
-        "methodology": DISCLAIMER,
+        "methodology": METHODOLOGY,
         "is_demo": mode(db),
         "horizons": [as_dict(h) for h in db.scalars(select(Horizon).order_by(Horizon.display_order))],
         "domains": [as_dict(d) for d in db.scalars(select(Domain))],

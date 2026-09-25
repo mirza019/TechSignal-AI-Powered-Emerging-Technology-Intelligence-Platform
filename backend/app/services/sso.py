@@ -24,7 +24,7 @@ from app.models import User, Role, SSOExchange, AuditLog, now
 from app.services.auth import passwords, token_for, limiter
 
 router = APIRouter(prefix="/auth")
-COOKIE = "grid-radar-sso-state"
+COOKIE = "techsignal-sso-state"
 
 
 def configured():
@@ -34,7 +34,12 @@ def configured():
 
 @router.get("/providers")
 def providers():
-    return {"microsoft": configured(), "demo_available": get_settings().seed_demo and get_settings().environment != "production"}
+    cfg = get_settings()
+    return {
+        "microsoft": configured(),
+        "demo_available": cfg.seed_demo and cfg.environment != "production",
+        "public_demo": cfg.public_demo and cfg.seed_demo and cfg.environment != "production",
+    }
 
 
 @router.get("/sso/login")
@@ -46,7 +51,7 @@ def start_sso(request: Request):
     state, nonce, verifier = secrets.token_urlsafe(32), secrets.token_urlsafe(32), secrets.token_urlsafe(48)
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     state_cookie = jwt.encode(
-        {"state": state, "nonce": nonce, "verifier": verifier, "exp": now() + timedelta(minutes=10), "iss": "grid-radar-sso"},
+        {"state": state, "nonce": nonce, "verifier": verifier, "exp": now() + timedelta(minutes=10), "iss": "techsignal-sso"},
         cfg.app_secret,
         algorithm="HS256",
     )
@@ -103,7 +108,7 @@ def callback(request: Request, code: str = "", state: str = "", error: str = "",
             request.cookies.get(COOKIE, ""),
             cfg.app_secret,
             algorithms=["HS256"],
-            issuer="grid-radar-sso",
+            issuer="techsignal-sso",
             options={"require": ["state", "nonce", "verifier", "exp", "iss"]},
         )
         if not hmac.compare_digest(signed["state"], state):

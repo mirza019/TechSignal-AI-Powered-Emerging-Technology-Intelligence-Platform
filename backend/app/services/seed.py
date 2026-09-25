@@ -24,6 +24,7 @@ from app.schemas import EvidenceInput
 from app.repositories.evidence import upsert_evidence
 from app.analytics.scoring import calculate_all, DEFAULT_WEIGHTS
 from app.utils.records import normalize_name
+from app.config import get_settings
 
 TECHNOLOGIES = [
     (
@@ -183,8 +184,19 @@ def seed(db):
             db.add(Role(name=role))
     db.flush()
     users = []
+    cfg = get_settings()
+    demo_passwords = {
+        "Admin": cfg.demo_admin_password,
+        "Analyst": cfg.demo_analyst_password,
+        "Viewer": cfg.demo_viewer_password,
+    }
     for role in ["Admin", "Analyst", "Viewer"]:
-        user = User(email=f"{role.lower()}@radar.local", name=f"Demo {role}", role=role, password_hash=passwords.hash("RadarDemo2026!"))
+        user = User(
+            email=f"{role.lower()}@techsignal.local",
+            name=f"Demo {role}",
+            role=role,
+            password_hash=passwords.hash(demo_passwords[role]),
+        )
         db.add(user)
         users.append(user)
     for domain, color in zip(DOMAINS, COLORS):
@@ -371,7 +383,7 @@ def seed(db):
                 run_id=run.id,
                 name=name,
                 position=i,
-                status="Skipped" if name == "AI Enrichment" else "Successful",
+                status="Successful",
                 processed=120,
                 inserted=120 if name == "Database Commit" else 0,
                 started_at=now() - timedelta(seconds=10 - i),

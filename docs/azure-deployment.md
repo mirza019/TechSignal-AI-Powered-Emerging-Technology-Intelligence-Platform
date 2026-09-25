@@ -1,7 +1,8 @@
-# Azure Container Apps deployment preparation
+# Azure Container Apps deployment
 
-Local development requires no Azure resources. These are deployment instructions,
-not a claim that paid infrastructure has been provisioned or tested.
+The portfolio deployment uses one Azure Container App with a public frontend and
+an internal backend sidecar. Nginx proxies `/api` to the backend over localhost.
+The GitHub workflow publishes both images to GitHub Container Registry.
 
 1. Provision Azure Database for PostgreSQL Flexible Server and a database `radar`.
    Require TLS (`?sslmode=require` on DATABASE_URL). Use private networking or an

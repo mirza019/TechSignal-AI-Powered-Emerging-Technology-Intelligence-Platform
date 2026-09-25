@@ -1,9 +1,9 @@
-# Implementation plan — Grid Technology Intelligence Radar
+# Implementation plan — TechSignal
 
 Build a runnable portfolio monorepo using React/TypeScript, FastAPI, SQLAlchemy,
 Alembic, PostgreSQL and Plotly. Local SQLite mode provides a zero-infrastructure
 preview; PostgreSQL is the deployment database. Every synthetic record is marked.
-H1–H4 is a configurable portfolio methodology, not Siemens Energy methodology.
+H1–H4 is a configurable technology horizon model.
 
 ## Phases and acceptance checks
 1. Foundation: configuration, normalized models, migrations, JWT/RBAC, seed data.
