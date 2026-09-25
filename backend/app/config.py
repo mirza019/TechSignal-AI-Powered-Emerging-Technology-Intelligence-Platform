@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     seed_demo: bool = True
     public_demo: bool = False
     bootstrap_live_catalog: bool = False
+    sqlite_backup_path: str = ""
     demo_admin_password: str = "RadarDemo2026!"
     demo_analyst_password: str = "RadarDemo2026!"
     demo_viewer_password: str = "RadarDemo2026!"

@@ -8,7 +8,9 @@ Live API/app URL: [TechSignal on Azure](https://techsignal.icywater-653510cb.pol
 
 Public frontend: [TechSignal on GitHub Pages](https://mirza019.github.io/TechSignal-AI-Powered-Emerging-Technology-Intelligence-Platform/)
 
-The hosted portfolio uses role-selected Microsoft SSO and persistent Azure Files-backed SQLite. The
+The hosted portfolio uses role-selected Microsoft SSO and local SQLite with a
+consistent Azure Files snapshot after every committed transaction. A new revision
+restores that snapshot before applying migrations. The
 Gemini key is stored as a Container
 Apps secret and is referenced by the backend environment without appearing in the
 manifest. The active revision is kept at one replica because pipeline tasks run in

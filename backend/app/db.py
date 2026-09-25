@@ -19,6 +19,13 @@ if url.startswith("sqlite"):
 
 SessionLocal = sessionmaker(engine, expire_on_commit=False)
 
+if url.startswith("sqlite") and get_settings().sqlite_backup_path:
+    from app.services.sqlite_backup import backup_sqlite_database
+
+    @event.listens_for(SessionLocal.class_, "after_commit")
+    def snapshot_after_commit(_session):
+        backup_sqlite_database()
+
 
 def get_db():
     with SessionLocal() as session:
