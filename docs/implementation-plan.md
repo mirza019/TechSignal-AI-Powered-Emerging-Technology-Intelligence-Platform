@@ -43,9 +43,9 @@ H1–H4 is a configurable technology horizon model.
 - Five frontend tests passed; TypeScript and Vite production build passed.
 - Browser QA confirmed login, radar rendering, pinned sign out and return to login.
   Navigation has an independent scroll region; page changes reset content scroll.
-- Live Gemini technology analysis and report generation succeeded. OpenAlex
-  collected 14 live papers. GDELT was rate-limited (429); failures remain visible
-  in pipeline logs. Public query results still require analyst relevance review.
+- Live Gemini schema, citation and numeric-grounding validation succeeded. OpenAlex
+  collected 59 live records. GDELT was rate-limited (429); all-429 runs are Deferred
+  without changing evidence. Public query results still require analyst relevance review.
 - PDF export rendered and visually reviewed; synthetic assessments and live
   evidence are explicitly distinguished in report provenance.
 - API keys moved into ignored local .env; .env.example contains placeholders only.

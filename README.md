@@ -335,8 +335,8 @@ The detailed success, failure and grounding cases are in the
 [verification matrix](docs/verification-matrix.md).
 Local PostgreSQL 16 + pgvector migration, rollback, merge and retrieval checks passed.
 Live Gemini generation and OpenAlex collection were also exercised. Provider calls
-use bounded retries, respect `Retry-After`, preserve partial results and surface a
-clear retry message when a public service is temporarily rate-limited.
+use bounded retries, respect `Retry-After`, preserve partial results and classify
+an all-429 provider response as Deferred without changing stored evidence.
 
 ## Scheduling / deployment
 

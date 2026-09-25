@@ -186,14 +186,14 @@ export function PipelinePage() {
               : "Select a pipeline run"
           }
           action={
-            detail?.status === "Failed" &&
+            (detail?.status === "Failed" || detail?.status === "Deferred") &&
             user.role === "Admin" && (
               <button
                 className="button small"
                 disabled={busy}
                 onClick={() => run(true)}
               >
-                <RefreshCw size={14} /> Retry failed run
+                <RefreshCw size={14} /> Retry {detail.status.toLowerCase()} run
               </button>
             )
           }
@@ -206,7 +206,7 @@ export function PipelinePage() {
                   ? CheckCircle2
                   : step.status === "Failed"
                     ? AlertCircle
-                    : step.status === "Running"
+                    : step.status === "Running" || step.status === "Deferred"
                       ? Clock3
                       : Circle;
               return (

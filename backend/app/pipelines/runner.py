@@ -55,6 +55,7 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
             raise ValueError("No active technologies matched this pipeline run")
         raw_records = []
         collection_warnings = []
+        rate_limited_queries = 0
         try:
             if run_provider == "web":
                 scraper = PublicScraper()
@@ -78,6 +79,7 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
                         raw_records.extend(provider.collect(technology.id, query, limit))
                     except (httpx.HTTPError, RuntimeError) as exc:
                         status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
+                        rate_limited_queries += int(status == 429)
                         detail = f"HTTP {status}" if status else type(exc).__name__
                         collection_warnings.append(f"{technology.name}: {detail}")
                         logger.warning(
@@ -85,6 +87,23 @@ def execute_run(run_id, session_factory=SessionLocal, provider_override=None, fa
                             extra={"run_id": run_id, "provider": run_provider, "technology_id": technology.id},
                         )
                 if collection_warnings and not raw_records:
+                    if rate_limited_queries == len(collection_warnings):
+                        message = (
+                            f"{run_provider.upper() if run_provider == 'gdelt' else run_provider.title()} temporarily deferred "
+                            "all requests because the provider returned HTTP 429. No data changed. "
+                            "Retry later or wait for the next scheduled collection window."
+                        )
+                        run.status = "Deferred"
+                        run.error = message
+                        run.ended_at = now()
+                        steps[0].status = "Deferred"
+                        steps[0].error = message
+                        steps[0].ended_at = now()
+                        for step in steps[1:]:
+                            step.status = "Skipped"
+                            step.error = "Collection was deferred before validation; no data changed"
+                        db.commit()
+                        return
                     raise RuntimeError(
                         f"{run_provider.title()} did not return data after bounded retries. "
                         "The public service may be rate-limited; retry one technology later."

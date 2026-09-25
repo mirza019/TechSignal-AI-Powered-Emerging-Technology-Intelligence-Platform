@@ -25,7 +25,7 @@ spend API quota or treat provider availability as correctness.
   deterministic fallback when model output violates a rule.
 - OpenAlex returned public records during live collection. Relevance still needs
   analyst review because search-provider inclusion does not prove relevance.
-- GDELT returned HTTP 429 during the latest live check. Bounded retry and visible
-  failure behavior are tested; the repository does not misstate provider uptime.
+- GDELT returned HTTP 429 during the latest live check. Bounded retry and the
+  no-mutation Deferred state are tested; the repository does not misstate provider uptime.
 - GitHub Actions runs backend, frontend, PostgreSQL/pgvector and Compose jobs on
-  every push. Azure deployment itself is documented and has not been provisioned.
+  every push. The Azure Container App and GitHub Pages frontend are deployed.

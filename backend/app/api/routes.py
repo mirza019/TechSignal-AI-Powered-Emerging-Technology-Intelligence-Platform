@@ -336,8 +336,8 @@ def pipeline_detail(id: str, db: Session = Depends(get_db), user=Depends(current
 @router.post("/pipeline/runs/{id}/retry", status_code=202)
 def retry_pipeline(id: str, tasks: BackgroundTasks, db: Session = Depends(get_db), user=Depends(require("Admin"))):
     parent = get_or_404(db, PipelineRun, id)
-    if parent.status != "Failed":
-        raise HTTPException(409, "Only failed runs may be retried")
+    if parent.status not in ("Failed", "Deferred"):
+        raise HTTPException(409, "Only failed or deferred runs may be retried")
     limiter.check("pipeline:" + user.id, 5)
     run = create_run(db, parent.provider, parent.technology_id, parent.limit, parent)
     audit(db, user, "pipeline.retried", run.id, after={"parent_run_id": parent.id})

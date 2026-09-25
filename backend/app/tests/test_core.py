@@ -162,8 +162,12 @@ def test_pipeline_explains_provider_rate_limit(factory):
     execute_run(run_id, factory, provider_override=ThrottledProvider())
     with factory() as db:
         run = db.get(PipelineRun, run_id)
-        assert run.status == "Failed"
-        assert "rate-limited" in run.error
+        assert run.status == "Deferred"
+        assert "HTTP 429" in run.error
+        assert "No data changed" in run.error
+        steps = db.scalars(select(PipelineStep).where(PipelineStep.run_id == run_id).order_by(PipelineStep.position)).all()
+        assert steps[0].status == "Deferred"
+        assert all(step.status == "Skipped" for step in steps[1:])
 
 
 def test_ai_citations_and_no_automatic_horizon_overwrite(db):
